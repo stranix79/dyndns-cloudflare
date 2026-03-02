@@ -1,0 +1,6 @@
+services:
+  dyndns:
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped  # Redémarrage automatique si le conteneur s'arrête
