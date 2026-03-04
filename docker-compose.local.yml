@@ -1,0 +1,16 @@
+# Version pour développement local avec build
+# Utilisez: docker-compose -f docker-compose.local.yml up -d
+
+services:
+  dyndns:
+    build:
+      context: .
+      platform: linux/amd64
+      tags:
+        - dyndns-cloudflare-dyndns:latest
+        - stranix79/dyndns-cloudflare:latest
+    platform: linux/amd64
+    env_file:
+      - .env
+    restart: unless-stopped
+    pull_policy: build  # Construire localement au lieu de pull

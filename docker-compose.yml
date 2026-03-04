@@ -1,6 +1,10 @@
 services:
   dyndns:
-    build: .
+    # Utiliser l'image Docker Hub par défaut (recommandé pour production)
+    # Pour construire localement, utilisez: docker-compose -f docker-compose.local.yml up -d
+    image: stranix79/dyndns-cloudflare:latest
+    platform: linux/amd64
     env_file:
       - .env
     restart: unless-stopped  # Redémarrage automatique si le conteneur s'arrête
+    pull_policy: always  # Toujours récupérer la dernière version de Docker Hub

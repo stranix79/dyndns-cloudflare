@@ -70,6 +70,19 @@ Le script vérifiera périodiquement votre IP publique et mettra à jour le DNS 
 
 #### Construction de l'image
 
+**Avec version automatique (recommandé)**
+```bash
+make build-version
+# ou
+./build.sh
+```
+
+**Construction manuelle pour amd64**
+```bash
+docker build --platform linux/amd64 -t cloudflare-dyndns .
+```
+
+**Construction pour l'architecture native**
 ```bash
 docker build -t cloudflare-dyndns .
 ```
@@ -84,6 +97,7 @@ cp .env.example .env
 
 docker run -d \
   --name cloudflare-dyndns \
+  --platform linux/amd64 \
   --env-file .env \
   --restart unless-stopped \
   cloudflare-dyndns
@@ -93,6 +107,7 @@ docker run -d \
 ```bash
 docker run -d \
   --name cloudflare-dyndns \
+  --platform linux/amd64 \
   -e CLOUDFLARE_TOKEN="votre_token_ici" \
   -e CLOUDFLARE_ZONE="stranix.net" \
   -e CLOUDFLARE_RECORD="home.stranix.net" \
@@ -118,7 +133,10 @@ docker rm cloudflare-dyndns
 
 ### Utilisation avec Docker Compose (recommandé)
 
-Le fichier `docker-compose.yml` est configuré pour utiliser le fichier `.env` :
+Le fichier `docker-compose.yml` est configuré pour utiliser l'image Docker Hub (`stranix79/dyndns-cloudflare:latest`) par défaut. Cela permet de :
+- ✅ Utiliser les versions publiées depuis Docker Hub
+- ✅ Conserver l'historique des versions dans le registry
+- ✅ Toujours utiliser la dernière version avec `:latest`
 
 1. **Créez le fichier `.env`** (si ce n'est pas déjà fait) :
 ```bash
@@ -126,9 +144,9 @@ cp .env.example .env
 # Éditez .env avec votre token Cloudflare
 ```
 
-2. **Démarrez le service** :
+2. **Démarrez le service** (utilise l'image Docker Hub) :
 ```bash
-# Démarrer le service
+# Démarrer le service (récupère automatiquement la dernière version)
 docker-compose up -d
 
 # Voir les logs
@@ -138,7 +156,103 @@ docker-compose logs -f
 docker-compose down
 ```
 
+**Pour développement local** (construire l'image localement) :
+```bash
+# Utiliser le fichier docker-compose.local.yml pour construire localement
+docker-compose -f docker-compose.local.yml up -d --build
+
+# Ou avec Make
+make up-local
+```
+
 Le conteneur vérifiera automatiquement votre IP publique toutes les 5 minutes (configurable via `CHECK_INTERVAL` dans `.env`) et mettra à jour le DNS Cloudflare si nécessaire.
+
+**Note** : L'image est construite pour la plateforme `linux/amd64` pour assurer la compatibilité, même sur des machines ARM (Apple Silicon).
+
+### Versioning automatique
+
+Le projet inclut un système de versioning automatique basé sur Git :
+
+- **Avec tag Git** : Si un tag existe (ex: `v1.0.0`), il sera utilisé
+- **Sans tag** : Format `YYYYMMDD-COMMIT_HASH` (ex: `20260302-5bc22cd`)
+- **Sans Git** : Format `YYYYMMDD-HHMMSS` basé sur la date
+
+#### Utilisation avec Make (recommandé)
+
+```bash
+# Construire avec version automatique
+make build-version
+
+# Construire et pousser vers Docker Hub
+make build-push
+
+# Pousser vers Docker Hub (après build)
+make push
+
+# Se connecter à Docker Hub
+make login
+
+# Voir la version générée
+make version
+
+# Démarrer le service (utilise l'image Docker Hub :latest)
+make up
+
+# Démarrer le service avec build local (pour développement)
+make up-local
+
+# Voir les logs
+make logs
+
+# Arrêter le service
+make down
+```
+
+#### Utilisation manuelle
+
+```bash
+# Générer la version
+./version.sh
+
+# Construire avec version (tagge aussi pour Docker Hub)
+./build.sh
+
+# Pousser vers Docker Hub
+./push.sh
+
+# Ou construire manuellement avec la version
+VERSION=$(./version.sh)
+docker build --platform linux/amd64 \
+  -t dyndns-cloudflare-dyndns:${VERSION} \
+  -t dyndns-cloudflare-dyndns:latest \
+  -t stranix79/dyndns-cloudflare:${VERSION} \
+  -t stranix79/dyndns-cloudflare:latest .
+```
+
+### Publication sur Docker Hub
+
+Les images sont automatiquement taggées pour Docker Hub (`stranix79/dyndns-cloudflare`) lors de la construction.
+
+**Première utilisation :**
+```bash
+# Se connecter à Docker Hub
+make login
+# ou
+docker login
+
+# Construire et pousser
+make build-push
+```
+
+**Utilisation de l'image depuis Docker Hub :**
+```bash
+# Récupérer l'image
+docker pull stranix79/dyndns-cloudflare:latest
+
+# Ou avec une version spécifique
+VERSION=$(./version.sh)
+docker pull stranix79/dyndns-cloudflare:${VERSION}
+```
 
 ## Fonctionnalités
 
